@@ -13,7 +13,7 @@
 #           user preference.
 #           The llmModelsDict includes a list of models and some metrics to automatically process several models
 #
-# Authors:  Tobias Moeltner, Johannes Gerstmayr 
+# Authors:  Tobias Möltner, Johannes Gerstmayr 
 # Date:     2024-09-18
 # Notes:    Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 #

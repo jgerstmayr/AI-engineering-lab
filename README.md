@@ -2,7 +2,7 @@
 
 ![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)
 
-**Authors**: Johannes Gerstmayr, Michael Pieber, Peter Manzl, Tobias Moeltner, Tobias Möltner
+**Authors**: Tobias Möltner, Peter Manzl, Michael Pieber, Johannes Gerstmayr
 
 **Date**: 2025-04-29
 
@@ -65,7 +65,7 @@ Below is the description of the Python scripts contained in this project:
 ### `logger.py`
 
 - **Details**: This script defines a class for logging different information of agent-functionalities.
-- **Authors**: Tobias Moeltner, Johannes Gerstmayr
+- **Authors**: Tobias Möltner, Johannes Gerstmayr
 - **Date**: 2024-12-20
 
 ### `mbsModelLoader.py`
@@ -90,7 +90,7 @@ Below is the description of the Python scripts contained in this project:
 ### `myLLM.py`
 
 - **Details**: The MyLLM class is intended for interacting with large language models (LLMs) of different kinds with one interface.
-- **Authors**: Tobias Moeltner, Johannes Gerstmayr
+- **Authors**: Tobias Möltner, Johannes Gerstmayr
 - **Date**: 2024-09-18
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
@@ -158,7 +158,7 @@ Below is the description of the Python scripts contained in this project:
 
 - **Details**: this file serves as a documented example that shall be used by
 - **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2025-13-01
+- **Date**: 2025-01-13
 
 ### `helperFiles/exudynHelper.py`
 

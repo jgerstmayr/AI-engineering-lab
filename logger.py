@@ -7,7 +7,7 @@
 # Details:  This script defines a class for logging different information of agent-functionalities.
 #           It logs the information both in human- and machinereadable format depending on the information provided.
 #
-# Authors:  Tobias Moeltner, Johannes Gerstmayr
+# Authors:  Tobias Möltner, Johannes Gerstmayr
 # Date:     2024-12-20
 #
 # License:  BSD-3 license
