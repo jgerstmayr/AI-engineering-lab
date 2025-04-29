@@ -2,38 +2,10 @@
 
 ![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)
 
-**Authors**: Tobias Möltner, Peter Manzl, Michael Pieber, Johannes Gerstmayr
+**Authors**: Johannes Gerstmayr, Tobias Möltner, Peter Manzl, Michael Pieber
 
-**Date**: 2025-04-29
-
-This repository contains the main code for the AI Engineering Lab project.  
+This repository contains the main code for the AI Engineering Lab project.
 It includes tools for AI agents, LLM model evaluations, test model creation, multibody system processing, and result analysis.
-
----
-
-## Table of Contents
-
-- [Description of Python scripts](#description-of-python-scripts)
-  - [`agent.py`](#agentpy)
-  - [`agentDriver.py`](#agentdriverpy)
-  - [`conjexplorerVisualizer.py`](#conjexplorervisualizerpy)
-  - [`logger.py`](#loggerpy)
-  - [`mbsModelLoader.py`](#mbsmodelloaderpy)
-  - [`misc.py`](#miscpy)
-  - [`motionAnalysis.py`](#motionanalysispy)
-  - [`myLLM.py`](#myllmpy)
-  - [`postProcessing.py`](#postprocessingpy)
-  - [`processResultsWithOpenAI_GPT4o.py`](#processresultswithopenaigpt4opy)
-  - [`readExudynHelper.py`](#readexudynhelperpy)
-  - [`templatesAndLists.py`](#templatesandlistspy)
-  - [`testModelCreation.py`](#testmodelcreationpy)
-  - [`testModelCreationDriver.py`](#testmodelcreationdriverpy)
-  - [`utilities.py`](#utilitiespy)
-  - [`writeREADME.py`](#writereadmepy)
-  - [`agentInputData/modelDescriptions.py`](#agentinputdatamodeldescriptionspy)
-  - [`helperFiles/evalHelper.py`](#helperfilesevalhelperpy)
-  - [`helperFiles/exudynHelper.py`](#helperfilesexudynhelperpy)
-- [License](#license)
 
 ---
 
@@ -43,131 +15,94 @@ Below is the description of the Python scripts contained in this project:
 
 ### `agent.py`
 
-- **Details**: This is the main file (main class) for self-validation and export of results (MergeConjecturesResults); to run, use agentDriver.py with args from command line;
-- **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2024-09-18 (last update 2025-04-29)
+- **Details**: This is the main file (main class) for self-validation and export of results (MergeConjecturesResults); to run, use agentDriver.py with args from command line; Main functions: - GenerateModelsAndConjecturesLoop: create models and conjectures (with separate LLM) - GenerateExudynModelsAndEval: create Exudyn models, execute and write evaluation results - EvaluateAllConjectures: evaluate simulation results OR conjectures
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `agentDriver.py`
 
-- **Details**: Runs agent.py methods from command line; use python agentDriver.py -h to see help;
-- **Authors**: Johannes Gerstmayr
-- **Date**: 2025-04-05
+- **Details**: Runs agent.py methods from command line; use python agentDriver.py -h to see help; besides running agent for LLM models, it also can merge results and exports latex tables
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `conjexplorerVisualizer.py`
 
 - **Details**: Visualizes and compares model evaluation scores across conjectures using interactive heatmaps and stacked bar plots.
-- **Authors**: Michael Pieber
-- **Date**: 2025-04-15
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
+- **Requirements**:  pip install dash; pip install plotly; pip install openpyxl
 
 ### `logger.py`
 
-- **Details**: This script defines a class for logging different information of agent-functionalities.
-- **Authors**: Tobias Möltner, Johannes Gerstmayr
-- **Date**: 2024-12-20
+- **Details**: This script defines a class for logging different information of agent-functionalities. It logs the information both in human- and machinereadable format depending on the information provided.
 
 ### `mbsModelLoader.py`
 
 - **Details**: Read textual Exudyn model descriptions, define standard (convenient) random numbers and add randomized parametrization for models
-- **Authors**: Tobias Möltner, Johannes Gerstmayr
-- **Date**: 2025-02-10
 
 ### `misc.py`
 
 - **Details**: Special functions like string operations, etc. used for AI agents
-- **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2024-09-18
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `motionAnalysis.py`
 
-- **Details**: main functionality to process sensor output and perform special multibody analysis;
-- **Authors**: Johannes Gerstmayr
-- **Date**: 2025-03-23
+- **Details**: main functionality to process sensor output and perform special multibody analysis; postprocessing of data, error and warning handling and conversion in AI-text-readable format
 
 ### `myLLM.py`
 
-- **Details**: The MyLLM class is intended for interacting with large language models (LLMs) of different kinds with one interface.
-- **Authors**: Tobias Möltner, Johannes Gerstmayr
-- **Date**: 2024-09-18
+- **Details**: The MyLLM class is intended for interacting with large language models (LLMs) of different kinds with one interface. It includes functionalities for loading LLMs, to generate text, and to log at different levels; Currently, it supports HF Transformers and GPT4All; It also includes procedures to extract special tokens (thinking, etc.); and logs token counts and performance The model and tokenizer are loaded from the Hugging Face `transformers` library. The script supports both CPU and GPU-based inference, depending on the availability of CUDA and user preference. The llmModelsDict includes a list of models and some metrics to automatically process several models
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `postProcessing.py`
 
 - **Details**: Post-processing functionalities for agent-results, using Levensthein and other metrics.
-- **Authors**: Tobias Möltner
-- **Date**: 2025-04-08
 - **Notes**: Place the "results.json" on the same level as this script for analysis.
 
 ### `processResultsWithOpenAI_GPT4o.py`
 
 - **Details**: This file uses the API from OpenAI to run judge on LLM conjectures with ChatGPT
-- **Authors**: Peter Manzl
-- **Date**: 2025-03-15
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `readExudynHelper.py`
 
 - **Details**: Read and parse exudynHelper.py and evalHelper and provide information as dictionary with tags
-- **Authors**: Johannes Gerstmayr
-- **Date**: 2025-01-05
 
 ### `templatesAndLists.py`
 
-- **Details**: main prompt templates (template to create the prompt for LLMs, using their prompt templates ...),
-- **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2025-02-10
+- **Details**: main prompt templates (template to create the prompt for LLMs, using their prompt templates ...), further lists, and dictionaries used by agent; dictOfEvaluationMethods: defines the evaluation methods with hints, needed codes and descriptions
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `testModelCreation.py`
 
-- **Details**: Main code and class for simulation model creation and testing;
-- **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2024-09-18
+- **Details**: Main code and class for simulation model creation and testing; In RunMBSmodelTests, Exudyn elements are extracted, example code is generated and LLM is asked to create code; Further, code is tested on executabilty and correctness (using ground-truth sample codes); use MergeTestModelResults to merge results
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `testModelCreationDriver.py`
 
-- **Details**: Driver file for testModelCreation, to be used from command line; type python testModelCreationDriver.py -h to see help
-- **Authors**: Johannes Gerstmayr
-- **Date**: 2025-03-15
+- **Details**: Driver file for testModelCreation, to be used from command line; type python testModelCreationDriver.py -h to see help Run tests for single LLM, or merge results and export to latex
 - **Notes**: Ensure that the appropriate model files are available locally or through the Hugging Face model hub.
 
 ### `utilities.py`
 
-- **Details**: Basic support functions for LLM-agents, and further functionalities of the LLM Lab.
-- **Authors**: Tobias Möltner and Johannes Gerstmayr
-- **Date**: 2025-03-11
+- **Details**: Basic support functions for LLM-agents, and further functionalities of the LLM Lab. Mainly processing text, numbers, extraction of xml-tags, logging helpers, file/json read/write, camelCase processing, latex export, ...
 
 ### `writeREADME.py`
 
 - **Details**: This script just writes the headers of the .py files in this folder to a .txt file
-- **Authors**: Michael Pieber
-- **Date**: 2025-04-29
 
 ### `agentInputData/modelDescriptions.py`
 
 - **Details**: Lists, dictionaries and lists used by agend
-- **Authors**: Tobias Möltner
-- **Date**: 2025-02-25
 - **Notes**: Collection of modeldescriptions and according possible parametrizations.
 
 ### `helperFiles/evalHelper.py`
 
-- **Details**: this file serves as a documented example that shall be used by
-- **Authors**: Johannes Gerstmayr, Tobias Möltner
-- **Date**: 2025-01-13
+- **Details**: this file serves as a documented example that shall be used by LLMs to update information on their internal knowledge of Exudyn; this file specifically addresses evaluation; the text is split by #%% comments, including tags for respective functionality
 
 ### `helperFiles/exudynHelper.py`
 
-- **Details**: this file serves as a documented example that shall be used by
-- **Authors**: Johannes Gerstmayr
-- **Date**: 2024-12-30
+- **Details**: this file serves as a documented example that shall be used by LLMs to update information on their internal knowledge of Exudyn; the text is split by #%% comments, including tags for respective functionality
 
 ---
 
 ## License
 
-BSD-3 license
+BSD-3-Clause license

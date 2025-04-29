@@ -14,9 +14,10 @@
 #
 # Requirements: 
 # 
-# pip install dash
-# pip install plotly
+# pip install dash;
+# pip install plotly;
 # pip install openpyxl
+#
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 import re
