@@ -24026,3 +24026,4823 @@ EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
 ***
 
 Creating simulation code for rigidRotorSimplySupported; random ID0 / 3; model ID31 / 35; time to go=162.57s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 5 kg, disc radius r = 0.15 m, and length = 0.5 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.5/2,0,0] resp. [0.5/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1250,2000,2000] N/m and damping values [7.5,10,10] Ns/m. The initial angular velocity of the rotor is [300,0,0]. Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further forces or damping are applied.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.25, tokens generated: 15, tokens per second: 12.03, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 5 kg, disc radius r = 0.15 m, and length = 0.5 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.5/2,0,0] resp. [0.5/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1250,2000,2000] N/m and damping values [7.5,10,10] Ns/m. The initial angular velocity of the rotor is [300,0,0]. Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further forces or damping are applied.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 5 
+outerRadius = 0.15
+length = 0.5
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[300,0,0], 
+                            gravity=[0,-9.81,0])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.5/2,0,0], 
+    localPosition1=[-0.5/2,0,0],        
+    stiffness = [1250,2000,2000], 
+    damping = [7.5,10,10], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.5/2,0,0], 
+    localPosition1=[0.5/2,0,0],        
+    stiffness = [1250,2000,2000], 
+    damping = [7.5,10,10], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 15.58, tokens generated: 487, tokens per second: 31.25, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 5 
+outerRadius = 0.15
+length = 0.5
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[300,0,0], 
+                            gravity=[0,-9.81,0])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.5/2,0,0], 
+    localPosition1=[-0.5/2,0,0],        
+    stiffness = [1250,2000,2000], 
+    damping = [7.5,10,10], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.5/2,0,0], 
+    localPosition1=[0.5/2,0,0],        
+    stiffness = [1250,2000,2000], 
+    damping = [7.5,10,10], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorSimplySupported0LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.5901
+Solver terminated successfully after 0.0813242 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorSimplySupported0: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for rigidRotorSimplySupported; random ID1 / 3; model ID31 / 35; time to go=149.43s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 2 kg, disc radius r = 0.1 m, and length = 0.8 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.8/2,0,0] resp. [0.8/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1500,2000,2000] N/m and damping values [6,20,20] Ns/m. The initial angular velocity of the rotor is [300,0,0]. Gravity g = 3.73 m/s^2 acts in negative y-direction, and no further forces or damping are applied.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.23, tokens generated: 15, tokens per second: 12.15, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 2 kg, disc radius r = 0.1 m, and length = 0.8 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.8/2,0,0] resp. [0.8/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1500,2000,2000] N/m and damping values [6,20,20] Ns/m. The initial angular velocity of the rotor is [300,0,0]. Gravity g = 3.73 m/s^2 acts in negative y-direction, and no further forces or damping are applied.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 2 
+outerRadius = 0.1
+length = 0.8
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[300,0,0], 
+                            gravity=[0,-3.73,0])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.8/2,0,0], 
+    localPosition1=[-0.8/2,0,0],        
+    stiffness = [1500,2000,2000], 
+    damping = [6,20,20], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.8/2,0,0], 
+    localPosition1=[0.8/2,0,0],        
+    stiffness = [1500,2000,2000], 
+    damping = [6,20,20], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 14.76, tokens generated: 482, tokens per second: 32.65, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 2 
+outerRadius = 0.1
+length = 0.8
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[300,0,0], 
+                            gravity=[0,-3.73,0])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.8/2,0,0], 
+    localPosition1=[-0.8/2,0,0],        
+    stiffness = [1500,2000,2000], 
+    damping = [6,20,20], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.8/2,0,0], 
+    localPosition1=[0.8/2,0,0],        
+    stiffness = [1500,2000,2000], 
+    damping = [6,20,20], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorSimplySupported1LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.9944
+Solver terminated successfully after 0.0981897 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorSimplySupported1: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for rigidRotorSimplySupported; random ID2 / 3; model ID31 / 35; time to go=136.12s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 4 kg, disc radius r = 0.15 m, and length = 1 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-1/2,0,0] resp. [1/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1000,3000,3000] N/m and damping values [8,10,10] Ns/m. The initial angular velocity of the rotor is [400,0,0]. Gravity g = 11.15 m/s^2 acts in negative z-direction, and no further forces or damping are applied.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.26, tokens generated: 15, tokens per second: 11.87, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 4 kg, disc radius r = 0.15 m, and length = 1 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0] (which is also the COM). The rotor is connected to ground with two Cartesian spring-dampers at global position [-1/2,0,0] resp. [1/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1000,3000,3000] N/m and damping values [8,10,10] Ns/m. The initial angular velocity of the rotor is [400,0,0]. Gravity g = 11.15 m/s^2 acts in negative z-direction, and no further forces or damping are applied.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 4 
+outerRadius = 0.15
+length = 1
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (z-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[400,0,0], 
+                            gravity=[0,0,-11.15])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.5,0,0], 
+    localPosition1=[-0.5,0,0],        
+    stiffness = [1000,3000,3000], 
+    damping = [8,10,10], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.5,0,0], 
+    localPosition1=[0.5,0,0],        
+    stiffness = [1000,3000,3000], 
+    damping = [8,10,10], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 14.5, tokens generated: 474, tokens per second: 32.68, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 4 
+outerRadius = 0.15
+length = 1
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (z-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[400,0,0], 
+                            gravity=[0,0,-11.15])       
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[-0.5,0,0], 
+    localPosition1=[-0.5,0,0],        
+    stiffness = [1000,3000,3000], 
+    damping = [8,10,10], 
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], 
+    localPosition0=[0.5,0,0], 
+    localPosition1=[0.5,0,0],        
+    stiffness = [1000,3000,3000], 
+    damping = [8,10,10], 
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorSimplySupported2LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.8881
+Solver terminated successfully after 0.0946569 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorSimplySupported2: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for rigidRotorUnbalanced; random ID0 / 3; model ID32 / 35; time to go=122.73s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 3 kg, disc radius r = 0.12 m, and length = 1 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.002,0], representing an unbalance U=3*0.002 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-1/2,0,0] resp. [1/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1250,4000,4000] N/m and damping values [5,15,15] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 3.73 m/s^2 acts in negative y-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, torque
+```
+
+**summary of choose Exudyn elements::** duration: 1.19, tokens generated: 12, tokens per second: 10.12, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the y-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[0,1,0]) #torque of 1Nm around y-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 3 kg, disc radius r = 0.12 m, and length = 1 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.002,0], representing an unbalance U=3*0.002 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-1/2,0,0] resp. [1/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1250,4000,4000] N/m and damping values [5,15,15] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 3.73 m/s^2 acts in negative y-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 3 
+outerRadius = 0.12
+length = 1
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.002,0]) #translate COM (in body-frame)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,-3.73,0])       #optional
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the x-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.5,0,0], #for body0
+    localPosition1=[-0.5,0,0],        #for body1
+    stiffness = [1250,4000,4000], #x,y,z stiffness
+    damping = [5,15,15], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.5,0,0], #for body0
+    localPosition1=[0.5,0,0],        #for body1
+    stiffness = [1250,4000,4000], #x,y,z stiffness
+    damping = [5,15,15], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 18.77, tokens generated: 619, tokens per second: 32.97, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 3 
+outerRadius = 0.12
+length = 1
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.002,0]) #translate COM (in body-frame)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,-3.73,0])       #optional
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the x-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.5,0,0], #for body0
+    localPosition1=[-0.5,0,0],        #for body1
+    stiffness = [1250,4000,4000], #x,y,z stiffness
+    damping = [5,15,15], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.5,0,0], #for body0
+    localPosition1=[0.5,0,0],        #for body1
+    stiffness = [1250,4000,4000], #x,y,z stiffness
+    damping = [5,15,15], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorUnbalanced0LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.9831
+Solver terminated successfully after 0.117482 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorUnbalanced0: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for rigidRotorUnbalanced; random ID1 / 3; model ID32 / 35; time to go=109.64s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 2 kg, disc radius r = 0.1 m, and length = 0.5 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.002,0], representing an unbalance U=2*0.002 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.5/2,0,0] resp. [0.5/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1000,2500,2500] N/m and damping values [6,12,12] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 11.15 m/s^2 acts in negative y-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, force with time-dependent user function, torque
+```
+
+**summary of choose Exudyn elements::** duration: 1.41, tokens generated: 19, tokens per second: 13.48, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+def UFforce(mbs, t, loadVector):
+    return (10+5*np.sin(t*10*2*np.pi))*np.array([0,5,0])
+
+mbs.CreateForce(bodyNumber=oBody,
+                localPosition=[0,1.2,0.5], #position at body
+                loadVectorUserFunction=UFforce)
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the y-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[0,1,0]) #torque of 1Nm around y-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 2 kg, disc radius r = 0.1 m, and length = 0.5 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.002,0], representing an unbalance U=2*0.002 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.5/2,0,0] resp. [0.5/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1000,2500,2500] N/m and damping values [6,12,12] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 11.15 m/s^2 acts in negative y-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 2 
+outerRadius = 0.1
+length = 0.5
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.002,0]) #translate COM (in body-frame)
+
+#Create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,-11.15,0])       #optional
+
+#Applies a 3D torque to a rigid body.
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.5/2,0,0], #for body0
+    localPosition1=[-0.5/2,0,0], #for body1
+    stiffness = [1000,2500,2500], #x,y,z stiffness
+    damping = [6,12,12], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.5/2,0,0], #for body0
+    localPosition1=[0.5/2,0,0], #for body1
+    stiffness = [1000,2500,2500], #x,y,z stiffness
+    damping = [6,12,12], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 19.72, tokens generated: 616, tokens per second: 31.24, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 2 
+outerRadius = 0.1
+length = 0.5
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.002,0]) #translate COM (in body-frame)
+
+#Create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,-11.15,0])       #optional
+
+#Applies a 3D torque to a rigid body.
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.5/2,0,0], #for body0
+    localPosition1=[-0.5/2,0,0], #for body1
+    stiffness = [1000,2500,2500], #x,y,z stiffness
+    damping = [6,12,12], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.5/2,0,0], #for body0
+    localPosition1=[0.5/2,0,0], #for body1
+    stiffness = [1000,2500,2500], #x,y,z stiffness
+    damping = [6,12,12], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorUnbalanced1LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.9949
+Solver terminated successfully after 0.11879 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorUnbalanced1: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for rigidRotorUnbalanced; random ID2 / 3; model ID32 / 35; time to go=96.49s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 3 kg, disc radius r = 0.1 m, and length = 0.75 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.00125,0], representing an unbalance U=3*0.00125 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.75/2,0,0] resp. [0.75/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1200,3000,3000] N/m and damping values [8,10,10] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 9.81 m/s^2 acts in negative z-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, cartesian spring damper, torque
+```
+
+**summary of choose Exudyn elements::** duration: 1.24, tokens generated: 12, tokens per second: 9.69, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the y-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[0,1,0]) #torque of 1Nm around y-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody2], #[body0,body1]
+    localPosition0=[4,-0.5*rbX,0], #for body0
+    localPosition1=[0,0,0],        #for body1
+    stiffness = [100,10,10], #x,y,z stiffness
+    damping = [5,2,2], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A rotor is modelled with a rigid body mounted on ground with Cartesian spring-dampers. The rotor is modelled as cylinder with mass m = 3 kg, disc radius r = 0.1 m, and length = 0.75 m. The axis of the rotor is initially oriented along the x-axis and the reference point of the rotor lies at [0,0,0]. The COM of the rigid body lies at [0,0.00125,0], representing an unbalance U=3*0.00125 kgm. The rotor is connected to ground with two Cartesian spring-dampers at global position [-0.75/2,0,0] resp. [0.75/2,0,0], the positions being identical with the local positions of the spring-dampers on the rotor. The Cartesian spring-dampers have stiffness values [1200,3000,3000] N/m and damping values [8,10,10] Ns/m. The rotor starts from zero velocity, and is driven by a torque [1,0,0] Nm. Gravity g = 9.81 m/s^2 acts in negative z-direction. Simulate the rotor for 2s and use a stepSize of 0.2ms to meet the accuracy limits.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 3 
+outerRadius = 0.1
+length = 0.75
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.00125,0]) #translate COM (in body-frame)
+
+#create a free rigid body using the defined inertia properties and applies gravity (z-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,0,-9.81])       #optional
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the x-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.75/2,0,0], #for body0
+    localPosition1=[-0.75/2,0,0],        #for body1
+    stiffness = [1200,3000,3000], #x,y,z stiffness
+    damping = [8,10,10], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.75/2,0,0], #for body0
+    localPosition1=[0.75/2,0,0],        #for body1
+    stiffness = [1200,3000,3000], #x,y,z stiffness
+    damping = [8,10,10], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 19.5, tokens generated: 635, tokens per second: 32.56, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+mass = 3 
+outerRadius = 0.1
+length = 0.75
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+inertiaCylinder = inertiaCylinder.Translated([0,0.00125,0]) #translate COM (in body-frame)
+
+#create a free rigid body using the defined inertia properties and applies gravity (z-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[0,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[0,0,0], #optional
+                            gravity=[0,0,-9.81])       #optional
+
+#Applies a 3D torque to a rigid body.
+#torque of 1Nm around the x-axis:
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[1,0,0]) #torque of 1Nm around x-axis
+
+#Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[-0.75/2,0,0], #for body0
+    localPosition1=[-0.75/2,0,0],        #for body1
+    stiffness = [1200,3000,3000], #x,y,z stiffness
+    damping = [8,10,10], #x,y,z damping
+)
+
+mbs.CreateCartesianSpringDamper(
+    bodyNumbers=[oGround, oBody], #[body0,body1]
+    localPosition0=[0.75/2,0,0], #for body0
+    localPosition1=[0.75/2,0,0],        #for body1
+    stiffness = [1200,3000,3000], #x,y,z stiffness
+    damping = [8,10,10], #x,y,z damping
+)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.0002 #for large rotation speeds
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/rigidRotorUnbalanced2LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 2e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.general.drawCoordinateSystem = False
+SC.visualizationSettings.general.drawWorldBasis = True
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP10000, t = 2s, timeToGo = 0s, Nit/step = 1.9882
+Solver terminated successfully after 0.118745 seconds.
+
+```
+
+LLM generated code is executable for rigidRotorUnbalanced2: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for doublePendulumRigidBodies; random ID0 / 3; model ID33 / 35; time to go=83.14s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 4000 kg/m^3, and xyz-dimensions lx=0.75 m, wy=0.25 m, hz=0.3 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further force acts.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body brick-shape, rigid body brick-shape, revolute joint, revolute joint, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.51, tokens generated: 26, tokens per second: 17.2, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 4000 kg/m^3, and xyz-dimensions lx=0.75 m, wy=0.25 m, hz=0.3 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further force acts.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick
+lx = 0.75
+wy = 0.25
+hz = 0.3
+
+#density of the brick
+density = 4000
+
+#volume of the brick
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#first rigid body
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#second rigid body
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#first revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#second revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 16.02, tokens generated: 520, tokens per second: 32.47, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick
+lx = 0.75
+wy = 0.25
+hz = 0.3
+
+#density of the brick
+density = 4000
+
+#volume of the brick
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#first rigid body
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#second rigid body
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#first revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#second revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/doublePendulumRigidBodies0LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 2.9455
+Solver terminated successfully after 0.0593543 seconds.
+
+```
+
+LLM generated code is executable for doublePendulumRigidBodies0: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for doublePendulumRigidBodies; random ID1 / 3; model ID33 / 35; time to go=69.48s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 5000 kg/m^3, and xyz-dimensions lx=2.5 m, wy=0.5 m, hz=0.12 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 11.15 m/s^2 acts in negative y-direction, and no further force acts.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body brick-shape, rigid body brick-shape, revolute joint, revolute joint, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.47, tokens generated: 26, tokens per second: 17.7, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 5000 kg/m^3, and xyz-dimensions lx=2.5 m, wy=0.5 m, hz=0.12 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 11.15 m/s^2 acts in negative y-direction, and no further force acts.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick-shape rigid bodies
+lx = 2.5
+wy = 0.5
+hz = 0.12
+
+#density of the bodies
+density = 5000
+
+#volume of the bodies
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape for body 1
+inertiaCube1 = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#inertia instance for cuboid (brick) shape for body 2
+inertiaCube2 = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create a free rigid body with defined inertia and applies gravity.
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube1,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-11.15,0])
+
+#Create a free rigid body with defined inertia and applies gravity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-11.15,0])
+
+#Create a revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Create a revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 17.66, tokens generated: 592, tokens per second: 33.52, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick-shape rigid bodies
+lx = 2.5
+wy = 0.5
+hz = 0.12
+
+#density of the bodies
+density = 5000
+
+#volume of the bodies
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape for body 1
+inertiaCube1 = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#inertia instance for cuboid (brick) shape for body 2
+inertiaCube2 = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create a free rigid body with defined inertia and applies gravity.
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube1,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-11.15,0])
+
+#Create a free rigid body with defined inertia and applies gravity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-11.15,0])
+
+#Create a revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Create a revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/doublePendulumRigidBodies1LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 2.912
+Solver terminated successfully after 0.0591524 seconds.
+
+```
+
+LLM generated code is executable for doublePendulumRigidBodies1: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for doublePendulumRigidBodies; random ID2 / 3; model ID33 / 35; time to go=55.8s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 2500 kg/m^3, and xyz-dimensions lx=0.8 m, wy=0.2 m, hz=0.2 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further force acts.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body brick-shape, rigid body brick-shape, revolute joint, revolute joint, force for rigid body
+```
+
+**summary of choose Exudyn elements::** duration: 1.49, tokens generated: 26, tokens per second: 17.44, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Applies a force in a specific direction to a rigid body at its local position.
+#apply 10N in x-direction:
+loadRigidBody = mbs.CreateForce(bodyNumber=oBody, localPosition=[0,0,0], loadVector=[10,0,0])
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+Double pendulum modeled with brick-shape rigid bodies and revolute joints. Both bodies have density = 2500 kg/m^3, and xyz-dimensions lx=0.8 m, wy=0.2 m, hz=0.2 m. The first body's center is located initially at [lx/2,0,0] and the second body at [3*lx/2,0,0], both bodies having their COM locally at [0,0,0] (not translated). The first revolute joint between ground and body 1 is located at [0,0,0] (global coordinates), and the second revolute joint between body 1 and body 2 is located at [lx,0,0] (global coordinates). Both revolute joints' have a free rotation around the z-axis.Gravity g = 9.81 m/s^2 acts in negative y-direction, and no further force acts.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick-shape rigid bodies
+lx = 0.8
+wy = 0.2
+hz = 0.2
+
+#density of the bodies
+density = 2500
+
+#volume of the bodies
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#first rigid body
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#second rigid body
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#first revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#second revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 15.56, tokens generated: 522, tokens per second: 33.55, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#xyz-dimensions of the brick-shape rigid bodies
+lx = 0.8
+wy = 0.2
+hz = 0.2
+
+#density of the bodies
+density = 2500
+
+#volume of the bodies
+volume = lx * wy * hz
+
+#inertia instance for cuboid (brick) shape
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#first rigid body
+oBody1 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#second rigid body
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube,
+                             referencePosition = [3*lx/2,0,0], #reference position, not COM
+                             initialVelocity = [0,0,0],   #optional
+                             initialAngularVelocity = [0,0,0], #optional
+                             gravity = [0,-9.81,0])
+
+#first revolute joint between ground and body 1
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oBody1], 
+                        position=[0,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#second revolute joint between body 1 and body 2
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody1, oBody2], 
+                        position=[lx,0,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/doublePendulumRigidBodies2LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 2.9455
+Solver terminated successfully after 0.0602478 seconds.
+
+```
+
+LLM generated code is executable for doublePendulumRigidBodies2: True
+EvaluateNumerical: Solutions difference = 0.0 [ODE2-based]
+
+***
+
+ - executable=True, diff=0
+
+***
+
+Creating simulation code for sliderCrankRigidBodies; random ID0 / 3; model ID34 / 35; time to go=41.94s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 3 kg, radius r = 0.25 m, and width = 0.1 m, and it is initially located at [0,0,-0.1]. The brick-shaped conrod and piston have identical parameters: density = 2800 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.08 m, hz=0.05 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=1 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, rigid body brick-shape, rigid body brick-shape, torque with user function, revolute joint, revolute joint, revolute joint, prismatic joint
+```
+
+**summary of choose Exudyn elements::** duration: 1.91, tokens generated: 38, tokens per second: 19.86, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+#define user function; take care of args; loadVector is passed through
+def UserFunctionTorque(mbs, t, loadVector):
+    return np.cos(t*2*np.pi)*np.array(loadVector)
+
+#add torque with user function
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[5,0,0], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oBody], 
+                         position=[3,0,0], #global position of joint
+                         axis=[1,0,0], #global axis of joint, can move in global x-direction
+                         useGlobalFrame=True) #use local coordinates for joint definition
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 3 kg, radius r = 0.25 m, and width = 0.1 m, and it is initially located at [0,0,-0.1]. The brick-shaped conrod and piston have identical parameters: density = 2800 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.08 m, hz=0.05 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=1 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 3
+radiusCrank = 0.25
+widthCrank = 0.1
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.1], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 2800
+lx = 0.5
+wy = 0.08
+hz = 0.05
+volumeCube = lx * wy * hz
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaCube,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             referenceRotationMatrix=RotationVector2RotationMatrix([0,0,0]),
+                             initialAngularVelocity=[0,0,0],
+                             initialVelocity=[0,0,0],
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaCube,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             referenceRotationMatrix=RotationVector2RotationMatrix([0,0,0]),
+                             initialAngularVelocity=[0,0,0],
+                             initialVelocity=[0,0,0],
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,1], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 25.83, tokens generated: 829, tokens per second: 32.09, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 3
+radiusCrank = 0.25
+widthCrank = 0.1
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.1], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 2800
+lx = 0.5
+wy = 0.08
+hz = 0.05
+volumeCube = lx * wy * hz
+inertiaCube = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaCube,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             referenceRotationMatrix=RotationVector2RotationMatrix([0,0,0]),
+                             initialAngularVelocity=[0,0,0],
+                             initialVelocity=[0,0,0],
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaCube,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             referenceRotationMatrix=RotationVector2RotationMatrix([0,0,0]),
+                             initialAngularVelocity=[0,0,0],
+                             initialVelocity=[0,0,0],
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,1], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/sliderCrankRigidBodies0LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+simulationSettings.linearSolverSettings.ignoreSingularJacobian = True
+simulationSettings.linearSolverType = exu.LinearSolverType.EigenDense
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.openGL.shadow = 0.25
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 2.884
+Solver terminated successfully after 0.150911 seconds.
+
+```
+
+LLM generated code is executable for sliderCrankRigidBodies0: True
+EvaluateNumerical: Solutions difference = 6.143526189354961e-07 [ODE2-based]
+
+***
+
+ - executable=True, diff=6.14353e-07
+
+***
+
+Creating simulation code for sliderCrankRigidBodies; random ID1 / 3; model ID34 / 35; time to go=28.24s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 2 kg, radius r = 0.25 m, and width = 0.08 m, and it is initially located at [0,0,-0.08]. The brick-shaped conrod and piston have identical parameters: density = 7850 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.075 m, hz=0.1 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=1.5 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, rigid body brick-shape, rigid body brick-shape, torque with user function, revolute joint, revolute joint, revolute joint, prismatic joint
+```
+
+**summary of choose Exudyn elements::** duration: 1.93, tokens generated: 38, tokens per second: 19.74, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+#define user function; take care of args; loadVector is passed through
+def UserFunctionTorque(mbs, t, loadVector):
+    return np.cos(t*2*np.pi)*np.array(loadVector)
+
+#add torque with user function
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[5,0,0], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oBody], 
+                         position=[3,0,0], #global position of joint
+                         axis=[1,0,0], #global axis of joint, can move in global x-direction
+                         useGlobalFrame=True) #use local coordinates for joint definition
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 2 kg, radius r = 0.25 m, and width = 0.08 m, and it is initially located at [0,0,-0.08]. The brick-shaped conrod and piston have identical parameters: density = 7850 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.075 m, hz=0.1 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=1.5 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 2
+radiusCrank = 0.25
+widthCrank = 0.08
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.08], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 7850
+lx = 0.5
+wy = 0.075
+hz = 0.1
+volumeConrod = lx * wy * hz
+volumePiston = lx * wy * hz
+massConrod = density * volumeConrod
+massPiston = density * volumePiston
+inertiaConrod = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+inertiaPiston = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaConrod,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaPiston,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,1.5], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 27.04, tokens generated: 864, tokens per second: 31.95, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 2
+radiusCrank = 0.25
+widthCrank = 0.08
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.08], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 7850
+lx = 0.5
+wy = 0.075
+hz = 0.1
+volumeConrod = lx * wy * hz
+volumePiston = lx * wy * hz
+massConrod = density * volumeConrod
+massPiston = density * volumePiston
+inertiaConrod = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+inertiaPiston = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaConrod,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaPiston,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,1.5], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/sliderCrankRigidBodies1LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+simulationSettings.linearSolverSettings.ignoreSingularJacobian = True
+simulationSettings.linearSolverType = exu.LinearSolverType.EigenDense
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.openGL.shadow = 0.25
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 2.827
+Solver terminated successfully after 0.149853 seconds.
+
+```
+
+LLM generated code is executable for sliderCrankRigidBodies1: True
+EvaluateNumerical: Solutions difference = 0.36572274177658465 [ODE2-based]
+
+***
+
+ - executable=True, diff=0.365723
+
+***
+
+Creating simulation code for sliderCrankRigidBodies; random ID2 / 3; model ID34 / 35; time to go=14.26s
+
+***
+
+**LLM task: choose Exudyn elements** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following elements are available in the simulation code Exudyn:
+general information: Use the following information as an update of the internal data of the Python multibody code Exudyn.
+ground: Create a ground object as an inertial reference frame for the multibody system.
+point mass: Create a point mass object with specified mass at reference position with optional initial conditions
+spring damper: Create a linear spring-damper system between two bodies or between a body and the ground.
+distance constraint: Create a rigid distance constraint between two points on different bodies or between a body and the ground.
+rigid body omniform: Create a rigid body with an abitrary shape.
+rigid body sphere: Create a rigid body with a spherical shape.
+rigid body cylinder: Create a rigid body with a cylindrical shape.
+rigid body brick-shape: Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+force for point mass: Applies a force in a specific direction to a point mass.
+force for rigid body: Applies a force in a specific direction to a rigid body at its local position.
+force with time-dependent user function: Defines a time-dependent force function and applies it to a rigid body or mass point at a specific local position.
+torque with user function: Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+torque: Applies a 3D torque to a rigid body.
+spherical joint: Create a spherical joint between two bodies/ground
+prismatic joint: Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+revolute joint: Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+torsional spring-damper: Create a torsional spring-damper between two bodies, ideally in combination with a revolute joint.
+rolling disc with penalty-based joint: Create a rigid body of a cylindrical disc (or wheel), and a rolling disc joint between the disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector; uses penalty formulation with linear contact and damping model.
+ideal rolling disc joint: Create a rigid body of a cylindrical disc (or wheel), and a joint between the rolling disc and the ground (ground must be first body); ground is defined by planePosition and planeNormal and disc joint is defined in body-local coordinates with axisPosition and axisVector
+cartesian spring damper: Create a special spring-damper which acts on translations in global x, y, and z-direction, with possibility to connect rigid bodies, mass points together or on ground.
+
+Given is a multibody model with the following description:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 2.5 kg, radius r = 0.2 m, and width = 0.075 m, and it is initially located at [0,0,-0.075]. The brick-shaped conrod and piston have identical parameters: density = 7850 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.075 m, hz=0.075 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=2 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Please list the elements that are required to build the given multibody model and which represent its mechanical behavior best, without repeating any element.
+Provide elements in a plain list such as element1, element2, ... , using exactly the provided terms, and don't add other text or explanations.
+
+```
+
+
+***
+
+**LLM response:** 
+
+```
+ground, rigid body cylinder, rigid body brick-shape, rigid body brick-shape, torque with user function, revolute joint, revolute joint, revolute joint, prismatic joint
+```
+
+**summary of choose Exudyn elements::** duration: 1.98, tokens generated: 38, tokens per second: 19.24, maxTokens: 512
+Warning: Removing undesired keyword: '```'
+
+***
+
+**LLM task: generate general Exudyn code** 
+
+***
+
+**LLM input prompt:** 
+
+```
+
+The following Python example shows how to generate a multibody model in Exudyn, including most relevant features: 
+
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+#Create a ground object at given (optional) referencePosition.  Even several ground objects at specific positions can be added.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Create a rigid body with a cylindrical shape.
+# defines the inertia with density, length, outerRadius, axis, innerRadius of the cylinder; axis defines the orientation of the cylinder axis (0=x-axis, 1=y-axis, 2=z-axis); for hollow cylinder use innerRadius != 0; inertia w.r.t. center of mass, com=[0,0,0].
+mass = 10 
+outerRadius = 0.45
+length = 2
+volume = np.pi * outerRadius**2 * length
+inertiaCylinder = InertiaCylinder(density=mass/volume, length=length, outerRadius=outerRadius, axis=0)
+
+#create a free rigid body using the defined inertia properties and applies gravity (y-direction).
+oBody = mbs.CreateRigidBody(inertia=inertiaCylinder,
+                            referencePosition=[3,0,0], #reference position x/y/z of COM
+                            initialVelocity=[0,0,0],   #optional
+                            initialAngularVelocity=[2*np.pi,0,0], #optional
+                            gravity=[0,-9.81,0])       #optional
+
+#Create a rigid body with a brick (cuboid) shape; uses rotated reference configuration.
+rbX = 2
+rbY = 0.5
+rbZ = 0.2
+
+#create inertia instance for cuboid (brick) shape
+mass=10 #kg
+volume=rbX*rbY*rbZ
+inertiaCube2 = InertiaCuboid(density=mass/volume, sideLengths=[rbX,rbY,rbZ])
+inertiaCube2 = inertiaCube2.Translated([0.5,0,0]) #translate COM (in body-frame), only if needed
+
+#create a free rigid body with defined inertia and applies an initial rotation and velocity.
+oBody2 = mbs.CreateRigidBody(inertia = inertiaCube2,
+                             referencePosition = [4,-0.5*rbX,0], #reference position, not COM
+                             referenceRotationMatrix = RotationVector2RotationMatrix([0,0,-0.5*np.pi]),
+                             initialAngularVelocity = [0,0,0.2*2*np.pi],
+                             initialVelocity = [0.2*np.pi*0.5*rbX,0,0],
+                             gravity = [0,-9.81,0])
+
+#Defines a user function of a time-dependent 3D torque function and applies it to a rigid body
+#define user function; take care of args; loadVector is passed through
+def UserFunctionTorque(mbs, t, loadVector):
+    return np.cos(t*2*np.pi)*np.array(loadVector)
+
+#add torque with user function
+mbs.CreateTorque(bodyNumber=oBody, loadVector=[5,0,0], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Create a prismatic joint between two rigid bodies / ground, allowing linear motion along a specified axis; position and axis are defined in global reference configuration
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oBody], 
+                         position=[3,0,0], #global position of joint
+                         axis=[1,0,0], #global axis of joint, can move in global x-direction
+                         useGlobalFrame=True) #use local coordinates for joint definition
+
+#Create a revolute joint between two rigid bodies / ground, allowing rotation about a specified axis; not compatible with point mass.
+mbs.CreateRevoluteJoint(bodyNumbers=[oBody, oBody2], 
+                        position=[4,-0.5,0], #global position of joint
+                        axis=[0,0,1], #rotation along global z-axis
+                        useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+Using this example, please build a Python model following exactly the following description of a multibody model:
+A slider-crank mechanism is given with a crank rotating about the z-axis. The crank is modelled as rigid body with cylinder shape (axis=z) with mass m = 2.5 kg, radius r = 0.2 m, and width = 0.075 m, and it is initially located at [0,0,-0.075]. The brick-shaped conrod and piston have identical parameters: density = 7850 kg/m^3, and xyz-dimensions lx=0.5 m, wy=0.075 m, hz=0.075 m, initially not rotated (straight configuration of slider-crank). The conrod's center is located initially at [r+0.5*lx,0,0] and the piston is initially located at [r+1.5*lx,0,0]. A torque [0,0,T] shall act on the crank, employing a user-function with T=2 Nm until 1 s and 0 thereafter. The revolute joint between ground and crank is located at [0,0,0] (global coordinates), the revolute joint between crank and conrod is located at [r,0,0] (global coordinates), and the revolute joint between conrod and piston is located at [r+lx,0,0] (global coordinates). The prismatic joint (axis=x) between ground and piston is located at [r+1.5*lx,0,0] (global coordinates). No gravity acts on the system. Simulate the system for 2 s.
+
+Follow exactly the function names and argument names as given in the example and create the Exudyn model.
+Provide only the Python code without any additional descriptions; you don't need to add comments, except for special cases.
+It is very important that you start the code with required imports and that you mark the end of code with the line "#end-of-code".
+```
+
+
+***
+
+**LLM response:** 
+
+```
+python
+#import Exudyn library and utilities
+import exudyn as exu
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 2.5
+radiusCrank = 0.2
+widthCrank = 0.075
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.075], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 7850
+lx = 0.5
+wy = 0.075
+hz = 0.075
+volumeConrod = lx * wy * hz
+volumePiston = lx * wy * hz
+massConrod = density * volumeConrod
+massPiston = density * volumePiston
+inertiaConrod = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+inertiaPiston = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaConrod,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaPiston,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,2], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Create revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+#end-of-code
+
+```
+
+**summary of generate general Exudyn code::** duration: 27.23, tokens generated: 871, tokens per second: 31.99, maxTokens: 3072
+
+```
+Execution code type: LLM generated, general exudyn model
+Exudyn code:
+#import Exudyn library and utilities
+import exudyn as exu
+exu.special.solver.timeout = 120
+exu.SetWriteToConsole(False) #no output to console
+exu.SetWriteToFile(filename="logsTM/log_QwenCoder-32B-Q4/exudynTemp.log", flagFlushAlways=True)
+from exudyn.utilities import *
+import numpy as np
+
+#set up new multibody system to work with
+SC = exu.SystemContainer()
+mbs = SC.AddSystem()
+
+#Create a ground object as an inertial reference frame for the multibody system.
+oGround = mbs.CreateGround(referencePosition=[0,0,0])
+
+#Crank parameters
+massCrank = 2.5
+radiusCrank = 0.2
+widthCrank = 0.075
+volumeCrank = np.pi * radiusCrank**2 * widthCrank
+inertiaCrank = InertiaCylinder(density=massCrank/volumeCrank, length=widthCrank, outerRadius=radiusCrank, axis=2)
+
+#Create crank rigid body
+oCrank = mbs.CreateRigidBody(inertia=inertiaCrank,
+                            referencePosition=[0,0,-0.075], 
+                            initialVelocity=[0,0,0],   
+                            initialAngularVelocity=[0,0,0], 
+                            gravity=[0,0,0])
+
+#Conrod and piston parameters
+density = 7850
+lx = 0.5
+wy = 0.075
+hz = 0.075
+volumeConrod = lx * wy * hz
+volumePiston = lx * wy * hz
+massConrod = density * volumeConrod
+massPiston = density * volumePiston
+inertiaConrod = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+inertiaPiston = InertiaCuboid(density=density, sideLengths=[lx, wy, hz])
+
+#Create conrod rigid body
+oConrod = mbs.CreateRigidBody(inertia=inertiaConrod,
+                             referencePosition=[radiusCrank+0.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Create piston rigid body
+oPiston = mbs.CreateRigidBody(inertia=inertiaPiston,
+                             referencePosition=[radiusCrank+1.5*lx,0,0], 
+                             initialVelocity=[0,0,0],   
+                             initialAngularVelocity=[0,0,0], 
+                             gravity=[0,0,0])
+
+#Torque user function
+def UserFunctionTorque(mbs, t, loadVector):
+    if t <= 1:
+        return np.array(loadVector)
+    else:
+        return np.array([0,0,0])
+
+#Add torque with user function
+mbs.CreateTorque(bodyNumber=oCrank, loadVector=[0,0,2], 
+                 loadVectorUserFunction=UserFunctionTorque)
+
+#Create revolute joint between ground and crank
+mbs.CreateRevoluteJoint(bodyNumbers=[oGround, oCrank], 
+                        position=[0,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create revolute joint between crank and conrod
+mbs.CreateRevoluteJoint(bodyNumbers=[oCrank, oConrod], 
+                        position=[radiusCrank,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create revolute joint between conrod and piston
+mbs.CreateRevoluteJoint(bodyNumbers=[oConrod, oPiston], 
+                        position=[radiusCrank+lx,0,0], 
+                        axis=[0,0,1], 
+                        useGlobalFrame=True)
+
+#Create prismatic joint between ground and piston
+mbs.CreatePrismaticJoint(bodyNumbers=[oGround, oPiston], 
+                         position=[radiusCrank+1.5*lx,0,0], 
+                         axis=[1,0,0], 
+                         useGlobalFrame=True)
+
+#Assemble has to be called just before solving or system analysis (after AddSensor!).
+mbs.Assemble()
+
+tEnd = 2
+stepSize = 0.001
+
+simulationSettings = exu.SimulationSettings()
+simulationSettings.solutionSettings.coordinatesSolutionFileName = "logsTM/log_QwenCoder-32B-Q4/solution/sliderCrankRigidBodies2LLM.txt"
+simulationSettings.timeIntegration.verboseMode = 1
+simulationSettings.solutionSettings.solutionWritePeriod = 1e-1
+simulationSettings.solutionSettings.sensorsWritePeriod = 5e-3
+simulationSettings.timeIntegration.numberOfSteps = int(tEnd/stepSize) #must be integer
+simulationSettings.timeIntegration.endTime = tEnd
+# simulationSettings.timeIntegration.verboseMode = 1
+
+simulationSettings.linearSolverSettings.ignoreSingularJacobian = True
+simulationSettings.linearSolverType = exu.LinearSolverType.EigenDense
+
+SC.visualizationSettings.nodes.drawNodesAsPoint=False
+SC.visualizationSettings.nodes.defaultSize=1
+SC.visualizationSettings.openGL.lineWidth = 3
+SC.visualizationSettings.openGL.shadow = 0.25
+
+
+#start solver:
+mbs.SolveDynamic(simulationSettings)
+exu.SetWriteToFile("",False)
+```
+
+
+```
+Exudyn code log:
++++++++++++++++++++++++++++++++
+EXUDYN V1.9.83.dev1 solver: implicit second order time integration
+STEP2000, t = 2s, timeToGo = 0s, Nit/step = 3.145
+Solver terminated successfully after 0.163099 seconds.
+
+```
+
+LLM generated code is executable for sliderCrankRigidBodies2: True
+EvaluateNumerical: Solutions difference = 1.2632226566207267 [ODE2-based]
+
+***
+
+ - executable=True, diff=1.26322
+
+***
+
+nExecutable = 105 of 105
+
+**FINAL TEST RESULTS** 
+ - flyingMassPoint0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - flyingMassPoint1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - flyingMassPoint2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - freeFallMassPoint0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - freeFallMassPoint1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - freeFallMassPoint2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillator0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillator1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillator2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorGravity0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorGravity1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorGravity2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - sliderCrankSimple0: 
+
+   + executable: True
+
+   + diff: 7.890761942207502
+
+ - sliderCrankSimple1: 
+
+   + executable: True
+
+   + diff: 164.30300620941836
+
+ - sliderCrankSimple2: 
+
+   + executable: True
+
+   + diff: 107.18300665661272
+
+ - singlePendulumElasticSpring0: 
+
+   + executable: True
+
+   + diff: 2.624054981e-14
+
+ - singlePendulumElasticSpring1: 
+
+   + executable: True
+
+   + diff: 57.33148660488317
+
+ - singlePendulumElasticSpring2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorUserFunction0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorUserFunction1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singleMassOscillatorUserFunction2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - spinningDisc0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - spinningDisc1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - spinningDisc2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doubleMassOscillator0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doubleMassOscillator1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doubleMassOscillator2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nMassOscillator0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nMassOscillator1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nMassOscillator2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singlePendulum0: 
+
+   + executable: True
+
+   + diff: 1.1810662254647172e-06
+
+ - singlePendulum1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singlePendulum2: 
+
+   + executable: True
+
+   + diff: 2699.5824268551096
+
+ - doublePendulum0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulum1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulum2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nPendulum0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nPendulum1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nPendulum2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - fourBarMechanismPointMasses0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - fourBarMechanismPointMasses1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - fourBarMechanismPointMasses2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - springCoupledFlyingRigidBodies0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - springCoupledFlyingRigidBodies1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - springCoupledFlyingRigidBodies2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - torsionalOscillator0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - torsionalOscillator1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - torsionalOscillator2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - invertedSinglePendulum0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - invertedSinglePendulum1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - invertedSinglePendulum2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - discRollingOnGround0: 
+
+   + executable: True
+
+   + diff: 4.374005617593857e-06
+
+ - discRollingOnGround1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - discRollingOnGround2: 
+
+   + executable: True
+
+   + diff: 9.465639944935599e-07
+
+ - doublePendulumElasticSpring0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulumElasticSpring1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulumElasticSpring2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - nPendulumElasticSpring0: 
+
+   + executable: True
+
+   + diff: 1.0979222057695147e-13
+
+ - nPendulumElasticSpring1: 
+
+   + executable: True
+
+   + diff: 108.90633235905985
+
+ - nPendulumElasticSpring2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - elasticChain0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - elasticChain1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - elasticChain2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singlePendulumRigidBody0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singlePendulumRigidBody1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - singlePendulumRigidBody2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringRigid0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringRigid1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringRigid2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringElastic0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringElastic1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - massPointOnStringElastic2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - linkOnTwoPrismaticJoints0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - linkOnTwoPrismaticJoints1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - linkOnTwoPrismaticJoints2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - flyingRigidBody0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - flyingRigidBody1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - flyingRigidBody2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - suspendedRigidBody0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - suspendedRigidBody1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - suspendedRigidBody2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - gyroscopeOnSphericalJoint0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - gyroscopeOnSphericalJoint1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - gyroscopeOnSphericalJoint2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - prismaticJointSystem0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - prismaticJointSystem1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - prismaticJointSystem2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithSprings0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithSprings1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithSprings2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithDistances0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithDistances1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - twoMassPointsWithDistances2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorSimplySupported0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorSimplySupported1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorSimplySupported2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorUnbalanced0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorUnbalanced1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - rigidRotorUnbalanced2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulumRigidBodies0: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulumRigidBodies1: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - doublePendulumRigidBodies2: 
+
+   + executable: True
+
+   + diff: 0.0
+
+ - sliderCrankRigidBodies0: 
+
+   + executable: True
+
+   + diff: 6.143526189354961e-07
+
+ - sliderCrankRigidBodies1: 
+
+   + executable: True
+
+   + diff: 0.36572274177658465
+
+ - sliderCrankRigidBodies2: 
+
+   + executable: True
+
+   + diff: 1.2632226566207267
+
+ - model flyingMassPoint0: exec=1,diff=0
+
+ - model flyingMassPoint1: exec=1,diff=0
+
+ - model flyingMassPoint2: exec=1,diff=0
+
+
+SUMMARY model flyingMassPoint: exec=100.0%, correct=100.0%
+
+ - model freeFallMassPoint0: exec=1,diff=0
+
+ - model freeFallMassPoint1: exec=1,diff=0
+
+ - model freeFallMassPoint2: exec=1,diff=0
+
+
+SUMMARY model freeFallMassPoint: exec=100.0%, correct=100.0%
+
+ - model singleMassOscillator0: exec=1,diff=0
+
+ - model singleMassOscillator1: exec=1,diff=0
+
+ - model singleMassOscillator2: exec=1,diff=0
+
+
+SUMMARY model singleMassOscillator: exec=100.0%, correct=100.0%
+
+ - model singleMassOscillatorGravity0: exec=1,diff=0
+
+ - model singleMassOscillatorGravity1: exec=1,diff=0
+
+ - model singleMassOscillatorGravity2: exec=1,diff=0
+
+
+SUMMARY model singleMassOscillatorGravity: exec=100.0%, correct=100.0%
+
+ - model sliderCrankSimple0: exec=1,diff=7.89076
+
+ - model sliderCrankSimple1: exec=1,diff=164.303
+
+ - model sliderCrankSimple2: exec=1,diff=107.183
+
+
+SUMMARY model sliderCrankSimple: exec=100.0%, correct=0.0%
+
+ - model singlePendulumElasticSpring0: exec=1,diff=2.62405e-14
+
+ - model singlePendulumElasticSpring1: exec=1,diff=57.3315
+
+ - model singlePendulumElasticSpring2: exec=1,diff=0
+
+
+SUMMARY model singlePendulumElasticSpring: exec=100.0%, correct=66.67%
+
+ - model singleMassOscillatorUserFunction0: exec=1,diff=0
+
+ - model singleMassOscillatorUserFunction1: exec=1,diff=0
+
+ - model singleMassOscillatorUserFunction2: exec=1,diff=0
+
+
+SUMMARY model singleMassOscillatorUserFunction: exec=100.0%, correct=100.0%
+
+ - model spinningDisc0: exec=1,diff=0
+
+ - model spinningDisc1: exec=1,diff=0
+
+ - model spinningDisc2: exec=1,diff=0
+
+
+SUMMARY model spinningDisc: exec=100.0%, correct=100.0%
+
+ - model doubleMassOscillator0: exec=1,diff=0
+
+ - model doubleMassOscillator1: exec=1,diff=0
+
+ - model doubleMassOscillator2: exec=1,diff=0
+
+
+SUMMARY model doubleMassOscillator: exec=100.0%, correct=100.0%
+
+ - model nMassOscillator0: exec=1,diff=0
+
+ - model nMassOscillator1: exec=1,diff=0
+
+ - model nMassOscillator2: exec=1,diff=0
+
+
+SUMMARY model nMassOscillator: exec=100.0%, correct=100.0%
+
+ - model singlePendulum0: exec=1,diff=1.18107e-06
+
+ - model singlePendulum1: exec=1,diff=0
+
+ - model singlePendulum2: exec=1,diff=2699.58
+
+
+SUMMARY model singlePendulum: exec=100.0%, correct=66.67%
+
+ - model doublePendulum0: exec=1,diff=0
+
+ - model doublePendulum1: exec=1,diff=0
+
+ - model doublePendulum2: exec=1,diff=0
+
+
+SUMMARY model doublePendulum: exec=100.0%, correct=100.0%
+
+ - model nPendulum0: exec=1,diff=0
+
+ - model nPendulum1: exec=1,diff=0
+
+ - model nPendulum2: exec=1,diff=0
+
+
+SUMMARY model nPendulum: exec=100.0%, correct=100.0%
+
+ - model fourBarMechanismPointMasses0: exec=1,diff=0
+
+ - model fourBarMechanismPointMasses1: exec=1,diff=0
+
+ - model fourBarMechanismPointMasses2: exec=1,diff=0
+
+
+SUMMARY model fourBarMechanismPointMasses: exec=100.0%, correct=100.0%
+
+ - model springCoupledFlyingRigidBodies0: exec=1,diff=0
+
+ - model springCoupledFlyingRigidBodies1: exec=1,diff=0
+
+ - model springCoupledFlyingRigidBodies2: exec=1,diff=0
+
+
+SUMMARY model springCoupledFlyingRigidBodies: exec=100.0%, correct=100.0%
+
+ - model torsionalOscillator0: exec=1,diff=0
+
+ - model torsionalOscillator1: exec=1,diff=0
+
+ - model torsionalOscillator2: exec=1,diff=0
+
+
+SUMMARY model torsionalOscillator: exec=100.0%, correct=100.0%
+
+ - model invertedSinglePendulum0: exec=1,diff=0
+
+ - model invertedSinglePendulum1: exec=1,diff=0
+
+ - model invertedSinglePendulum2: exec=1,diff=0
+
+
+SUMMARY model invertedSinglePendulum: exec=100.0%, correct=100.0%
+
+ - model discRollingOnGround0: exec=1,diff=4.37401e-06
+
+ - model discRollingOnGround1: exec=1,diff=0
+
+ - model discRollingOnGround2: exec=1,diff=9.46564e-07
+
+
+SUMMARY model discRollingOnGround: exec=100.0%, correct=100.0%
+
+ - model doublePendulumElasticSpring0: exec=1,diff=0
+
+ - model doublePendulumElasticSpring1: exec=1,diff=0
+
+ - model doublePendulumElasticSpring2: exec=1,diff=0
+
+
+SUMMARY model doublePendulumElasticSpring: exec=100.0%, correct=100.0%
+
+ - model nPendulumElasticSpring0: exec=1,diff=1.09792e-13
+
+ - model nPendulumElasticSpring1: exec=1,diff=108.906
+
+ - model nPendulumElasticSpring2: exec=1,diff=0
+
+
+SUMMARY model nPendulumElasticSpring: exec=100.0%, correct=66.67%
+
+ - model elasticChain0: exec=1,diff=0
+
+ - model elasticChain1: exec=1,diff=0
+
+ - model elasticChain2: exec=1,diff=0
+
+
+SUMMARY model elasticChain: exec=100.0%, correct=100.0%
+
+ - model singlePendulumRigidBody0: exec=1,diff=0
+
+ - model singlePendulumRigidBody1: exec=1,diff=0
+
+ - model singlePendulumRigidBody2: exec=1,diff=0
+
+
+SUMMARY model singlePendulumRigidBody: exec=100.0%, correct=100.0%
+
+ - model massPointOnStringRigid0: exec=1,diff=0
+
+ - model massPointOnStringRigid1: exec=1,diff=0
+
+ - model massPointOnStringRigid2: exec=1,diff=0
+
+
+SUMMARY model massPointOnStringRigid: exec=100.0%, correct=100.0%
+
+ - model massPointOnStringElastic0: exec=1,diff=0
+
+ - model massPointOnStringElastic1: exec=1,diff=0
+
+ - model massPointOnStringElastic2: exec=1,diff=0
+
+
+SUMMARY model massPointOnStringElastic: exec=100.0%, correct=100.0%
+
+ - model linkOnTwoPrismaticJoints0: exec=1,diff=0
+
+ - model linkOnTwoPrismaticJoints1: exec=1,diff=0
+
+ - model linkOnTwoPrismaticJoints2: exec=1,diff=0
+
+
+SUMMARY model linkOnTwoPrismaticJoints: exec=100.0%, correct=100.0%
+
+ - model flyingRigidBody0: exec=1,diff=0
+
+ - model flyingRigidBody1: exec=1,diff=0
+
+ - model flyingRigidBody2: exec=1,diff=0
+
+
+SUMMARY model flyingRigidBody: exec=100.0%, correct=100.0%
+
+ - model suspendedRigidBody0: exec=1,diff=0
+
+ - model suspendedRigidBody1: exec=1,diff=0
+
+ - model suspendedRigidBody2: exec=1,diff=0
+
+
+SUMMARY model suspendedRigidBody: exec=100.0%, correct=100.0%
+
+ - model gyroscopeOnSphericalJoint0: exec=1,diff=0
+
+ - model gyroscopeOnSphericalJoint1: exec=1,diff=0
+
+ - model gyroscopeOnSphericalJoint2: exec=1,diff=0
+
+
+SUMMARY model gyroscopeOnSphericalJoint: exec=100.0%, correct=100.0%
+
+ - model prismaticJointSystem0: exec=1,diff=0
+
+ - model prismaticJointSystem1: exec=1,diff=0
+
+ - model prismaticJointSystem2: exec=1,diff=0
+
+
+SUMMARY model prismaticJointSystem: exec=100.0%, correct=100.0%
+
+ - model twoMassPointsWithSprings0: exec=1,diff=0
+
+ - model twoMassPointsWithSprings1: exec=1,diff=0
+
+ - model twoMassPointsWithSprings2: exec=1,diff=0
+
+
+SUMMARY model twoMassPointsWithSprings: exec=100.0%, correct=100.0%
+
+ - model twoMassPointsWithDistances0: exec=1,diff=0
+
+ - model twoMassPointsWithDistances1: exec=1,diff=0
+
+ - model twoMassPointsWithDistances2: exec=1,diff=0
+
+
+SUMMARY model twoMassPointsWithDistances: exec=100.0%, correct=100.0%
+
+ - model rigidRotorSimplySupported0: exec=1,diff=0
+
+ - model rigidRotorSimplySupported1: exec=1,diff=0
+
+ - model rigidRotorSimplySupported2: exec=1,diff=0
+
+
+SUMMARY model rigidRotorSimplySupported: exec=100.0%, correct=100.0%
+
+ - model rigidRotorUnbalanced0: exec=1,diff=0
+
+ - model rigidRotorUnbalanced1: exec=1,diff=0
+
+ - model rigidRotorUnbalanced2: exec=1,diff=0
+
+
+SUMMARY model rigidRotorUnbalanced: exec=100.0%, correct=100.0%
+
+ - model doublePendulumRigidBodies0: exec=1,diff=0
+
+ - model doublePendulumRigidBodies1: exec=1,diff=0
+
+ - model doublePendulumRigidBodies2: exec=1,diff=0
+
+
+SUMMARY model doublePendulumRigidBodies: exec=100.0%, correct=100.0%
+
+ - model sliderCrankRigidBodies0: exec=1,diff=6.14353e-07
+
+ - model sliderCrankRigidBodies1: exec=1,diff=0.365723
+
+ - model sliderCrankRigidBodies2: exec=1,diff=1.26322
+
+
+SUMMARY model sliderCrankRigidBodies: exec=100.0%, correct=33.33%
+
+
+***
+
+Overall evaluation duration: 1513.106
+
+***
+
+numberOfTokensGlobal:48300, numberOfRemovedTokensGlobal:0, tokensPerSecondGlobal:32.15800644590479
+
+
+***
+
+
+executable      = 100.0%
+correct         = 92.38%

@@ -1,0 +1,1240 @@
+{
+    "llmModelName": "qwen2.5-coder-32b-instruct-q4_0.gguf",
+    "exudynVersion": "1.9.83.dev1",
+    "mbsModelNamesLoaded": [
+        "flyingMassPoint",
+        "freeFallMassPoint",
+        "singleMassOscillator",
+        "singleMassOscillatorGravity",
+        "sliderCrankSimple",
+        "singlePendulumElasticSpring",
+        "singleMassOscillatorUserFunction",
+        "spinningDisc",
+        "doubleMassOscillator",
+        "nMassOscillator",
+        "singlePendulum",
+        "doublePendulum",
+        "nPendulum",
+        "fourBarMechanismPointMasses",
+        "springCoupledFlyingRigidBodies",
+        "torsionalOscillator",
+        "invertedSinglePendulum",
+        "discRollingOnGround",
+        "doublePendulumElasticSpring",
+        "nPendulumElasticSpring",
+        "elasticChain",
+        "singlePendulumRigidBody",
+        "massPointOnStringRigid",
+        "massPointOnStringElastic",
+        "linkOnTwoPrismaticJoints",
+        "flyingRigidBody",
+        "suspendedRigidBody",
+        "gyroscopeOnSphericalJoint",
+        "prismaticJointSystem",
+        "twoMassPointsWithSprings",
+        "twoMassPointsWithDistances",
+        "rigidRotorSimplySupported",
+        "rigidRotorUnbalanced",
+        "doublePendulumRigidBodies",
+        "sliderCrankRigidBodies"
+    ],
+    "runTime": 1513.1055555343628,
+    "useWrongModelsInConjectures": false,
+    "doSpaceVariation": 0,
+    "numberOfConjecturesPerModel": 8,
+    "numberOfRandomizations": 3,
+    "diffSolutionTolerance": 1e-05,
+    "maxDifficultyLevel": 25,
+    "executableLLMlist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+    ],
+    "differenceLLMlist": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.890761942207502,
+        164.30300620941836,
+        107.18300665661272,
+        2.624054981e-14,
+        57.33148660488317,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.1810662254647172e-06,
+        0.0,
+        2699.5824268551096,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        4.374005617593857e-06,
+        0.0,
+        9.465639944935599e-07,
+        0.0,
+        0.0,
+        0.0,
+        1.0979222057695147e-13,
+        108.90633235905985,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.143526189354961e-07,
+        0.36572274177658465,
+        1.2632226566207267
+    ],
+    "executableEvalLLMlist": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+    ],
+    "scoreConjLLMlist": [
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10,
+        -10
+    ],
+    "modelsWithIDlist": [
+        [
+            "flyingMassPoint",
+            0
+        ],
+        [
+            "flyingMassPoint",
+            1
+        ],
+        [
+            "flyingMassPoint",
+            2
+        ],
+        [
+            "freeFallMassPoint",
+            0
+        ],
+        [
+            "freeFallMassPoint",
+            1
+        ],
+        [
+            "freeFallMassPoint",
+            2
+        ],
+        [
+            "singleMassOscillator",
+            0
+        ],
+        [
+            "singleMassOscillator",
+            1
+        ],
+        [
+            "singleMassOscillator",
+            2
+        ],
+        [
+            "singleMassOscillatorGravity",
+            0
+        ],
+        [
+            "singleMassOscillatorGravity",
+            1
+        ],
+        [
+            "singleMassOscillatorGravity",
+            2
+        ],
+        [
+            "sliderCrankSimple",
+            0
+        ],
+        [
+            "sliderCrankSimple",
+            1
+        ],
+        [
+            "sliderCrankSimple",
+            2
+        ],
+        [
+            "singlePendulumElasticSpring",
+            0
+        ],
+        [
+            "singlePendulumElasticSpring",
+            1
+        ],
+        [
+            "singlePendulumElasticSpring",
+            2
+        ],
+        [
+            "singleMassOscillatorUserFunction",
+            0
+        ],
+        [
+            "singleMassOscillatorUserFunction",
+            1
+        ],
+        [
+            "singleMassOscillatorUserFunction",
+            2
+        ],
+        [
+            "spinningDisc",
+            0
+        ],
+        [
+            "spinningDisc",
+            1
+        ],
+        [
+            "spinningDisc",
+            2
+        ],
+        [
+            "doubleMassOscillator",
+            0
+        ],
+        [
+            "doubleMassOscillator",
+            1
+        ],
+        [
+            "doubleMassOscillator",
+            2
+        ],
+        [
+            "nMassOscillator",
+            0
+        ],
+        [
+            "nMassOscillator",
+            1
+        ],
+        [
+            "nMassOscillator",
+            2
+        ],
+        [
+            "singlePendulum",
+            0
+        ],
+        [
+            "singlePendulum",
+            1
+        ],
+        [
+            "singlePendulum",
+            2
+        ],
+        [
+            "doublePendulum",
+            0
+        ],
+        [
+            "doublePendulum",
+            1
+        ],
+        [
+            "doublePendulum",
+            2
+        ],
+        [
+            "nPendulum",
+            0
+        ],
+        [
+            "nPendulum",
+            1
+        ],
+        [
+            "nPendulum",
+            2
+        ],
+        [
+            "fourBarMechanismPointMasses",
+            0
+        ],
+        [
+            "fourBarMechanismPointMasses",
+            1
+        ],
+        [
+            "fourBarMechanismPointMasses",
+            2
+        ],
+        [
+            "springCoupledFlyingRigidBodies",
+            0
+        ],
+        [
+            "springCoupledFlyingRigidBodies",
+            1
+        ],
+        [
+            "springCoupledFlyingRigidBodies",
+            2
+        ],
+        [
+            "torsionalOscillator",
+            0
+        ],
+        [
+            "torsionalOscillator",
+            1
+        ],
+        [
+            "torsionalOscillator",
+            2
+        ],
+        [
+            "invertedSinglePendulum",
+            0
+        ],
+        [
+            "invertedSinglePendulum",
+            1
+        ],
+        [
+            "invertedSinglePendulum",
+            2
+        ],
+        [
+            "discRollingOnGround",
+            0
+        ],
+        [
+            "discRollingOnGround",
+            1
+        ],
+        [
+            "discRollingOnGround",
+            2
+        ],
+        [
+            "doublePendulumElasticSpring",
+            0
+        ],
+        [
+            "doublePendulumElasticSpring",
+            1
+        ],
+        [
+            "doublePendulumElasticSpring",
+            2
+        ],
+        [
+            "nPendulumElasticSpring",
+            0
+        ],
+        [
+            "nPendulumElasticSpring",
+            1
+        ],
+        [
+            "nPendulumElasticSpring",
+            2
+        ],
+        [
+            "elasticChain",
+            0
+        ],
+        [
+            "elasticChain",
+            1
+        ],
+        [
+            "elasticChain",
+            2
+        ],
+        [
+            "singlePendulumRigidBody",
+            0
+        ],
+        [
+            "singlePendulumRigidBody",
+            1
+        ],
+        [
+            "singlePendulumRigidBody",
+            2
+        ],
+        [
+            "massPointOnStringRigid",
+            0
+        ],
+        [
+            "massPointOnStringRigid",
+            1
+        ],
+        [
+            "massPointOnStringRigid",
+            2
+        ],
+        [
+            "massPointOnStringElastic",
+            0
+        ],
+        [
+            "massPointOnStringElastic",
+            1
+        ],
+        [
+            "massPointOnStringElastic",
+            2
+        ],
+        [
+            "linkOnTwoPrismaticJoints",
+            0
+        ],
+        [
+            "linkOnTwoPrismaticJoints",
+            1
+        ],
+        [
+            "linkOnTwoPrismaticJoints",
+            2
+        ],
+        [
+            "flyingRigidBody",
+            0
+        ],
+        [
+            "flyingRigidBody",
+            1
+        ],
+        [
+            "flyingRigidBody",
+            2
+        ],
+        [
+            "suspendedRigidBody",
+            0
+        ],
+        [
+            "suspendedRigidBody",
+            1
+        ],
+        [
+            "suspendedRigidBody",
+            2
+        ],
+        [
+            "gyroscopeOnSphericalJoint",
+            0
+        ],
+        [
+            "gyroscopeOnSphericalJoint",
+            1
+        ],
+        [
+            "gyroscopeOnSphericalJoint",
+            2
+        ],
+        [
+            "prismaticJointSystem",
+            0
+        ],
+        [
+            "prismaticJointSystem",
+            1
+        ],
+        [
+            "prismaticJointSystem",
+            2
+        ],
+        [
+            "twoMassPointsWithSprings",
+            0
+        ],
+        [
+            "twoMassPointsWithSprings",
+            1
+        ],
+        [
+            "twoMassPointsWithSprings",
+            2
+        ],
+        [
+            "twoMassPointsWithDistances",
+            0
+        ],
+        [
+            "twoMassPointsWithDistances",
+            1
+        ],
+        [
+            "twoMassPointsWithDistances",
+            2
+        ],
+        [
+            "rigidRotorSimplySupported",
+            0
+        ],
+        [
+            "rigidRotorSimplySupported",
+            1
+        ],
+        [
+            "rigidRotorSimplySupported",
+            2
+        ],
+        [
+            "rigidRotorUnbalanced",
+            0
+        ],
+        [
+            "rigidRotorUnbalanced",
+            1
+        ],
+        [
+            "rigidRotorUnbalanced",
+            2
+        ],
+        [
+            "doublePendulumRigidBodies",
+            0
+        ],
+        [
+            "doublePendulumRigidBodies",
+            1
+        ],
+        [
+            "doublePendulumRigidBodies",
+            2
+        ],
+        [
+            "sliderCrankRigidBodies",
+            0
+        ],
+        [
+            "sliderCrankRigidBodies",
+            1
+        ],
+        [
+            "sliderCrankRigidBodies",
+            2
+        ]
+    ],
+    "numberOfMBSmodelsLoaded": 35,
+    "numberOfModelCreationTasks": 105,
+    "nExecutableLLMs": 105,
+    "nExecutableEvalLLMs": 105,
+    "nExecutableSamples": 105,
+    "numberOfRemovedTokensGlobal": 0,
+    "numberOfTokensGlobal": 48300,
+    "mbsModelsLLMdir": "logsTM/log_QwenCoder-32B-Q4/mbsModelsLLM",
+    "logDir": "logsTM/log_QwenCoder-32B-Q4/",
+    "solutionDir": "logsTM/log_QwenCoder-32B-Q4/solution",
+    "llmConfig": {
+        "backend": "GPT4All",
+        "contextWindowMaxSize": 4096,
+        "durationGlobal": 1501.9587759971619,
+        "durationLocal": 27.227286338806152,
+        "localGenerateTokenCount": 0,
+        "logPromptInput": false,
+        "modelName": "qwen2.5-coder-32b-instruct-q4_0.gguf",
+        "nThreads": 16,
+        "numberOfGenerateCalls": 210,
+        "numberOfRemovedTokensGlobal": 0,
+        "numberOfRemovedTokensLocal": 0,
+        "numberOfTokensGlobal": 48300,
+        "numberOfTokensLocal": 871,
+        "thinkingString": "",
+        "tokensPerSecondGlobal": 32.15800644590479,
+        "tokensPerSecondLocal": 31.99,
+        "useTokenCallback": true
+    },
+    "agentConfig": {
+        "agentOutputDataDir": "logsTM/log_QwenCoder-32B-Q4/",
+        "diffSolutionTolerance": 1e-05,
+        "filePathEvalHelper": "helperFiles/evalHelper.py",
+        "filePathExudynHelper": "helperFiles/exudynHelper.py",
+        "maxDifficultyLevel": 25,
+        "maxTokensChooseItems": 512,
+        "maxTokensEvaluateConjecture": 2048,
+        "maxTokensGenerateConjecture": 768,
+        "maxTokensGenerateEvalMethods": 1024,
+        "maxTokensGenerateModel": 3072,
+        "nDigitsEvaluate": 4,
+        "nResampleSize": 11,
+        "numberOfModelVariations": 1,
+        "totalNumberOfCodesGenerated": 105,
+        "useAlternativeModel": false,
+        "useExudynTimeout": false
+    },
+    "modelsEval": {
+        "flyingMassPoint": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "freeFallMassPoint": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singleMassOscillator": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singleMassOscillatorGravity": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "sliderCrankSimple": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 0.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singlePendulumElasticSpring": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 0.6667,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singleMassOscillatorUserFunction": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "spinningDisc": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "doubleMassOscillator": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "nMassOscillator": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singlePendulum": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 0.6667,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "doublePendulum": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "nPendulum": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "fourBarMechanismPointMasses": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "springCoupledFlyingRigidBodies": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "torsionalOscillator": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "invertedSinglePendulum": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "discRollingOnGround": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "doublePendulumElasticSpring": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "nPendulumElasticSpring": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 0.6667,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "elasticChain": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "singlePendulumRigidBody": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "massPointOnStringRigid": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "massPointOnStringElastic": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "linkOnTwoPrismaticJoints": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "flyingRigidBody": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "suspendedRigidBody": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "gyroscopeOnSphericalJoint": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "prismaticJointSystem": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "twoMassPointsWithSprings": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "twoMassPointsWithDistances": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "rigidRotorSimplySupported": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "rigidRotorUnbalanced": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "doublePendulumRigidBodies": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 1.0,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        },
+        "sliderCrankRigidBodies": {
+            "scoreExecutable": 1.0,
+            "scoreCorrect": 0.3333,
+            "scoreExecutableEval": 0.0,
+            "scoreConjecture": 0.0,
+            "scoreConjCorrect": 0.0,
+            "scoreConjWrong": 0.0
+        }
+    },
+    "nExecutable": 105,
+    "nCorrect": 97,
+    "nScoreConjecture": 0,
+    "nConjectureCorrect": 0,
+    "nConjectureWrong": 0,
+    "totalScoreExecutable": 1.0,
+    "totalScoreCorrect": 0.9238,
+    "totalScoreExecutableEval": 0.0,
+    "totalScoreConjecture": 0.0,
+    "totalScoreConjectureCorrect": 0.0,
+    "totalScoreConjectureWrong": 0.0,
+    "executionDateStr": "2025-04-29",
+    "executionTimeStr": "17:34:45"
+}
