@@ -6,6 +6,7 @@
 
 This repository contains the main code for the AI Engineering Lab project.
 It includes tools for AI agents, LLM model evaluations, test model creation, multibody system processing, and result analysis.
+The project introduces a benchmark framework for evaluating LLMs on mechanical engineering problems, specifically multibody dynamics. It supports automated generation of simulation models in Python, using parametrized setups with ground truth solutions to test model executability and correctness. LLM agents generate models and perform self-validation using predefined checks to identify errors in parametrization. Results are evaluated using F-score metrics, showing that while most models capture general trends, only the best-performing LLM accurately detects invalid simulations.
 
 ---
 
