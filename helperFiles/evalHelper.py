@@ -9,7 +9,7 @@
 #           the text is split by #%% comments, including tags for respective functionality
 #
 # Author:   Johannes Gerstmayr, Tobias Möltner
-# Date:     2025-13-01
+# Date:     2025-01-13
 #
 # License:  BSD-3 license
 #
