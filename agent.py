@@ -1731,7 +1731,7 @@ def WriteAgentResults2LatexTable(filePath, finalResultsAllModels):
             if 'run time' in latexName:
                 valueStr = str(round(value/60,1)) if value/60 < 1000 else str(int(value/60))
             elif 'tokens generated' in latexName:
-                valueStr = str(int(value/1024))
+                valueStr = str(int(round(value/1024)))
             elif 'tokens per second' in latexName:
                 valueStr = str(round(value,1))
             elif '%' in latexName:

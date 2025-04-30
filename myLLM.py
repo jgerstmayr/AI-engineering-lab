@@ -104,6 +104,7 @@ llmScoresDict = {
     'Qwen2.5-32B': {'MATH':63, 'IFEval':83, 'MMLU-Pro':52, 'GPQA':12}, # from HF leaderboard bfloat16 
     'Qwen2.5-72B': {'MATH':60, 'IFEval':86, 'MMLU-Pro':51, 'GPQA':17}, # from HF leaderboard bfloat16 
     'QwenCoder-32B': {'MATH':-1, 'IFEval':-1, 'MMLU-Pro':-1, 'GPQA':-1}, # no proper evaluation metrics available! only: https://qwenlm.github.io/blog/qwen2.5-coder-family/
+    #'QwenCoder-32B': {'MATH':76.4, 'IFEval':79.9, 'MMLU-Pro':62.3, 'GPQA':41.8}, # used from paper: https://arxiv.org/pdf/2409.12186
     'Phi4': {'MATH':46, 'IFEval':67, 'MMLU-Pro':47, 'GPQA':12}, # from HF leaderboard bfloat16 
     'Calme3.1-78B': {'MATH':39, 'IFEval':81, 'MMLU-Pro':69, 'GPQA':19}, # from HF leaderboard bfloat16 
     'Calme3.2-78B': {'MATH':40, 'IFEval':81, 'MMLU-Pro':70, 'GPQA':20}, # from HF leaderboard bfloat16 
@@ -119,31 +120,31 @@ llmScoresDict = {
 llmModelsDict = {
     'OpenAI_GPT-4o': {'type':'API', 'VRAM':-1, 'nParam':-1, 'Q':-1, 'ctxSize':-1, 'shortName':'GPT-4o', 'quality':0}, 
     'qwen2.5-coder-32b-instruct-q5_0.gguf': {'type':'gguf', 'VRAM':22.1, 'nParam':32, 'Q':5, 'ctxSize':32, 'shortName':'QwenCoder-32B-Q5', 'quality':64}, 
-    'qwen2.5-coder-32b-instruct-q4_0.gguf': {'type':'gguf', 'VRAM':18.6, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'QwenCoder-32B-Q4', 'quality':64},
+    'qwen2.5-coder-32b-instruct-q4_0.gguf': {'type':'gguf', 'VRAM':17.75, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'QwenCoder-32B-Q4', 'quality':64},
     #worse than bartowski Q8: 
     'Meta-Llama-3.1-8B-Instruct_MP.Q8_0.gguf': {'type':'gguf', 'VRAM':8.3, 'nParam':8, 'Q':8, 'ctxSize':128, 'shortName':'Llama3.1-8B-Q8-MP', 'quality':8},
     'Meta-Llama-3.1-8B-Instruct-Q8_0.gguf': {'type':'gguf', 'VRAM':8.3, 'nParam':8, 'Q':8, 'ctxSize':128, 'shortName':'Llama3.1-8B-Q8', 'quality':8},
-    'Meta-Llama-3.1-8B-Instruct-128k-Q4_0.gguf':{'type':'gguf', 'VRAM':4.5, 'nParam':8, 'Q':4, 'ctxSize':128, 'shortName':'Llama3.1-8B-Q4', 'quality':8},
+    'Meta-Llama-3.1-8B-Instruct-128k-Q4_0.gguf':{'type':'gguf', 'VRAM':4.56, 'nParam':8, 'Q':4, 'ctxSize':128, 'shortName':'Llama3.1-8B-Q4', 'quality':8},
     #
     'Meta-Llama-3-8B-Instruct-Q8_0.gguf': {'type':'gguf', 'VRAM':8.5, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q8', 'quality':15},
     #'Meta-Llama-3-8B-Instruct.Q8_0.gguf': {'type':'gguf', 'VRAM':8.5, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q8', 'quality':15},
     #'Meta-Llama-3-8B-Instruct_QF.Q8_0.gguf': {'type':'gguf', 'VRAM':8.5, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q8-QF', 'quality':15},
     'Meta-Llama-3-8B-Instruct_LMS-Q8_0.gguf': {'type':'gguf', 'VRAM':8.5, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q8-LMS', 'quality':15},
-    'Meta-Llama-3-8B-Instruct.Q4_0.gguf': {'type':'gguf', 'VRAM':4.5, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q4', 'quality':15},
+    'Meta-Llama-3-8B-Instruct.Q4_0.gguf': {'type':'gguf', 'VRAM':4.56, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-Q4', 'quality':15},
     #
     'llama-2-70b-chat.Q5_K_M.gguf': {'type':'gguf', 'VRAM':48.8, 'nParam':69, 'Q':5, 'ctxSize':4, 'shortName':'Llama2-70B-Q5', 'quality':0},
     #
     'gemma-3-27b-it-q4_0.gguf': {'type':'gguf', 'VRAM':17.2, 'nParam':27, 'Q':4, 'ctxSize':128, 'shortName':'Gemma3-27B-Q4', 'quality':0},
-    'Codestral-22B-v0.1-Q6_K.gguf': {'type':'gguf', 'VRAM':18, 'nParam':22, 'Q':6, 'ctxSize':32, 'shortName':'Codestral-22B-Q6', 'quality':55},
+    'Codestral-22B-v0.1-Q6_K.gguf': {'type':'gguf', 'VRAM':17.52, 'nParam':22, 'Q':6, 'ctxSize':32, 'shortName':'Codestral-22B-Q6', 'quality':55},
     'Llama-3.3-70B-Instruct-IQ2_XS.gguf': {'type':'gguf', 'VRAM':21.7, 'nParam':70, 'Q':2, 'ctxSize':128, 'shortName':'Llama3.3-70B-Q2', 'quality':0},
-    'phi-4-Q4_0.gguf': {'type':'gguf', 'VRAM':8.2, 'nParam':14.7, 'Q':4, 'ctxSize':16, 'shortName':'Phi4-Q4', 'quality':64},
+    'phi-4-Q4_0.gguf': {'type':'gguf', 'VRAM':8.18, 'nParam':14.7, 'Q':4, 'ctxSize':16, 'shortName':'Phi4-Q4', 'quality':64},
     'phi-4.Q4_K_M.gguf': {'type':'gguf', 'VRAM':8.8, 'nParam':14.7, 'Q':4, 'ctxSize':16, 'shortName':'Phi4-Q4-KM', 'quality':64},
     'phi-4.Q8_0.gguf': {'type':'gguf', 'VRAM':15, 'nParam':14.7, 'Q':4, 'ctxSize':16, 'shortName':'Phi4-Q8', 'quality':64},
-    'qwq-32b-q4_k_m.gguf': {'type':'gguf', 'VRAM':19.3, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'QwenQwQ-32B-Q4', 'quality':0},
-    'FluentlyLM-Prinum.Q4_K_M.gguf': {'type':'gguf', 'VRAM':19.3, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'FluentlyLM-Q4', 'quality':64},
-    'Viper-Coder-v1.7-Vsm6.Q8_0.gguf': {'type':'gguf', 'VRAM':16.0, 'nParam':14.8, 'Q':8, 'ctxSize':128, 'shortName':'ViperCoder-Q8', 'quality':0},
+    'qwq-32b-q4_k_m.gguf': {'type':'gguf', 'VRAM':18.88, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'QwenQwQ-32B-Q4', 'quality':0},
+    'FluentlyLM-Prinum.Q4_K_M.gguf': {'type':'gguf', 'VRAM':18.88, 'nParam':32, 'Q':4, 'ctxSize':32, 'shortName':'FluentlyLM-Q4', 'quality':64},
+    'Viper-Coder-v1.7-Vsm6.Q8_0.gguf': {'type':'gguf', 'VRAM':14.52, 'nParam':14.8, 'Q':8, 'ctxSize':128, 'shortName':'ViperCoder-Q8', 'quality':0},
     'Viper-Coder-v1.7-Vsm6.Q4_K_M.gguf': {'type':'gguf', 'VRAM':9.0, 'nParam':14.8, 'Q':8, 'ctxSize':128, 'shortName':'ViperCoder-Q4', 'quality':0},
-    'DeepSeek-Coder-V2-Lite-Instruct-Q6_K.gguf': {'type':'gguf', 'VRAM':13.7, 'nParam':15.7, 'Q':6, 'ctxSize':128, 'shortName':'DeepSeekCoder-16B-Q6', 'quality':0},
+    'DeepSeek-Coder-V2-Lite-Instruct-Q6_K.gguf': {'type':'gguf', 'VRAM':13.67, 'nParam':15.7, 'Q':6, 'ctxSize':128, 'shortName':'DeepSeekCoder-16B-Q6', 'quality':0},
     'wizardcoder-python-34b-v1.0.Q4_K_M.gguf': {'type':'gguf', 'VRAM':20.2, 'nParam':34, 'Q':4, 'ctxSize':128, 'shortName':'WizardCoderPython-34B-Q4', 'quality':0},
 
 
@@ -154,7 +155,7 @@ llmModelsDict = {
     'meta-llama_Llama-Scout-17B-16E-Instruct-Q4_K_M/meta-llama_Llama-4-Scout-17B-16E-Instruct-Q4_K_M-00001-of-00002.gguf': {'type':'gguf', 'VRAM':67.5, 'nParam':108, 'Q':5, 'ctxSize':256, 'shortName':'Llama4-Scout-Q4', 'quality':0},
     'Hermes-3-Llama-3.1-405B-Q8_0/Hermes-3-Llama-3.1-405B-Q8_0-00001-of-00011.gguf': {'type':'gguf', 'VRAM':401.62, 'nParam':405, 'Q':8, 'ctxSize':128, 'shortName':'Llama3.1-405B-Q8', 'quality':0},
     'DeepSeek-R1-Q8.gguf': {'type':'gguf', 'VRAM':676.8, 'nParam':671, 'Q':8, 'ctxSize':128, 'shortName':'DeepSeek-R1-Q8', 'quality':0},
-    'deepseek-coder-33b-instruct.Q4_0.gguf': {'type':'gguf', 'VRAM':19, 'nParam':33, 'Q':4, 'ctxSize':0, 'shortName':'DeepSeekCoder-33B-Q4', 'quality':0},
+    'deepseek-coder-33b-instruct.Q4_0.gguf': {'type':'gguf', 'VRAM':18.17, 'nParam':33, 'Q':4, 'ctxSize':0, 'shortName':'DeepSeekCoder-33B-Q4', 'quality':0},
     # HF (add quality for each model!)
     'google/gemma-3-27b-it':{'type':'huggingface', 'VRAM':54.81, 'nParam':27, 'Q':16, 'ctxSize':16, 'shortName':'Gemma3-27B-HF', 'quality':0},
     'meta-llama/Llama-3-8B-Instruct': {'type':'huggingface', 'VRAM':16.07, 'nParam':8, 'Q':4, 'ctxSize':8, 'shortName':'Llama3-8B-HF', 'quality':15},
@@ -987,7 +988,8 @@ Put sensor-related information in plain text between tags: <sensor> ... </sensor
     
         logger.LogText(f"LLM-response test 1: {output}", separator=True, printToConsole=not llmModel.useTokenCallback)
 
-    if True:
+    if False:
+        #simple tests with model loader
         from mbsModelLoader import ModelLoader
         from utilities import ExtractXMLtaggedString
         mbsModelLoader = ModelLoader()
@@ -1011,6 +1013,7 @@ Put sensor-related information in plain text between tags: <sensor> ... </sensor
             else:
                 logger.LogText(f'\n***** mbs model description {name} not translated *****\n\n')
     
+    llmModel.FreeMemory()
     # # test 2 (multi-GPU)
     # llmModelName = "meta-llama/Llama-3.3-70B-Instruct"
     # llmModel = MyLLM(modelName=llmModelName, 

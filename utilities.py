@@ -999,7 +999,7 @@ def OverallResults2LaTexTable(tableRows, desiredColumns, latexFilePath):
             selectedHeader[i] = r'\#parameters (B)'
 
     latexCode = []
-    broadColumns = 3
+    broadColumns = 4
 
     numColumns = len(selectedHeader)
     columnDef = r"p{3.2cm}" + r"|p{0.3cm}"*(numColumns-(broadColumns+1)) + r"|p{0.6cm}"*(broadColumns)
@@ -1015,7 +1015,7 @@ def OverallResults2LaTexTable(tableRows, desiredColumns, latexFilePath):
 
     highlightColumns={
         3:-1,#small is good
-        5:1, #large is good
+        4:1, #large is good
         7:1, #large is good
         8:1, #large is good
         }
@@ -1045,8 +1045,10 @@ def OverallResults2LaTexTable(tableRows, desiredColumns, latexFilePath):
                 val = float(cell)
                 if '%' in selectedHeader[k]:
                     s += str(round(val * 100, 2))
+                elif 'VRAM' in selectedHeader[k] and val < 100:
+                    s += str(round(val, 1))
                 else:
-                    s += str(int(val))
+                    s += str(int(round(val)))
                 selectedRow.append(s)
             except ValueError:
                 if cell == 'huggingface':
