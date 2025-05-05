@@ -36,6 +36,14 @@ python agentDriver.py -n Phi4-Q4 -c 8 -r 2 -wc -simOnly -sMC -sGE
 ```
 Before running the agent for Phi-Q4, you need to copy `results_MC.json` and `results_GE.json` from the folder `log_QwenCoder-32B-Q4` to the folder `log_Phi4-Q4`.
 
+For merging the results of several agent runs, either run:
+
+`python ./testModelCreationDriver.py -m 'logsTM'`
+
+or:
+
+`python ./agentDriver.py -m 'logsAgent'`
+
 For further options, run the files with the -h option to see help.
 
 ---
