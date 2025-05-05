@@ -4,10 +4,35 @@
 
 **Authors**: Johannes Gerstmayr, Tobias Möltner, Peter Manzl, Michael Pieber
 
-This repository contains the main code for the AI Engineering Lab project.
-It includes tools for AI agents, LLM model evaluations, test model creation, multibody system processing, and result analysis.
+This repository contains the main code for the AI Engineering Lab project, see the preprint:
+
+Tobias Möltner, Peter Manzl, Michael Pieber, and Johannes Gerstmayr. Creation, Evaluation and Self-Validation of Simulation Models with Large Language Models, 01 May 2025, PREPRINT (Version 1) available at Research Square
+<https://doi.org/10.21203/rs.3.rs-6566994/v1>
+
+This GitHub project includes tools for AI agents, LLM model evaluations, test model creation, multibody system processing, and result analysis.
 
 The project introduces a benchmark framework for evaluating LLMs on mechanical engineering problems, specifically multibody dynamics. It supports automated generation of simulation models in Python, using parametrized setups with ground truth solutions to test model executability and correctness. LLM agents generate models and perform self-validation using predefined checks to identify errors in parametrization. Results are evaluated using F-score metrics, showing that while most models capture general trends, only the best-performing LLM accurately detects invalid simulations.
+
+---
+
+## Notes for running agent.py
+
+In order to run the code, you need to install at least:
+
+`pip install exudyn==1.9.83 gpt4all[cuda]`
+
+For agents to run, you **first need to extract samples** in folder `sampleFiles` (see readme there)!
+
+In the root folder, you can run the following scrips:
+
+```
+python testModelCreationJoh.py -n Llama3.1-8B-Q4
+python agentDriver.py -n QwenCoder-32B-Q4 -c 8 -r 2 -wc -simOnly
+python agentDriver.py -n Phi4-Q4 -c 8 -r 2 -wc -simOnly -sMC -sGE
+```
+Before running the agent for Phi-Q4, you need to copy `results_MC.json` and `results_GE.json` from the folder `log_QwenCoder-32B-Q4` to the folder `log_Phi4-Q4`.
+
+For further options, run the files with the -h option to see help.
 
 ---
 
