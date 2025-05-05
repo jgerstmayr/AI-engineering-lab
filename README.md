@@ -26,7 +26,7 @@ For agents to run, you **first need to extract samples** in folder `sampleFiles`
 In the root folder, you can run the following scrips:
 
 ```
-python testModelCreationJoh.py -n Llama3.1-8B-Q4
+python testModelCreationDriver.py -n Llama3.1-8B-Q4
 python agentDriver.py -n QwenCoder-32B-Q4 -c 8 -r 2 -wc -simOnly
 python agentDriver.py -n Phi4-Q4 -c 8 -r 2 -wc -simOnly -sMC -sGE
 ```
