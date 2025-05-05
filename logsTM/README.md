@@ -1,3 +1,3 @@
 # Test model results
-Note that this folder only contains sample results, because full runs do not fit on GitHub (>9000 files, 800MB)
+Note that allTests.zip contains all results obtained by running ´python testModelCreationDriver.py´ for each tested LLM and all mechanical models with 10 different parametrizations.
 
