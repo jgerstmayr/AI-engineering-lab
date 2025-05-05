@@ -15,11 +15,15 @@ The project introduces a benchmark framework for evaluating LLMs on mechanical e
 
 ---
 
-## Notes for running agent.py
+## Notes for running LLM agents
 
 In order to run the code, you need to install at least:
 
 `pip install exudyn==1.9.83 gpt4all[cuda]`
+
+or if run via HuggingFace's transformers:
+
+`pip install exudyn==1.9.83 transformers==4.51.3` 
 
 For agents to run, you **first need to extract samples** in folder `sampleFiles` (see readme there)!
 
