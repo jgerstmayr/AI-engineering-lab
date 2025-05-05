@@ -1729,11 +1729,11 @@ def WriteAgentResults2LatexTable(filePath, finalResultsAllModels):
             value = finalResults[key]
             isBest = (bestIndicesValues[key] == value and key in highlightColumns)
             if 'run time' in latexName:
-                valueStr = str(round(value/60,1)) if value/60 < 1000 else str(int(value/60))
+                valueStr = str(int(round(value/60,0))) if value/60 < 1000 else str(int(value/60))
             elif 'tokens generated' in latexName:
                 valueStr = str(int(round(value/1024)))
             elif 'tokens per second' in latexName:
-                valueStr = str(round(value,1))
+                valueStr = str(int(round(value,0)))
             elif '%' in latexName:
                 valueStr = str(round(value*100,1))+r'\%'
             else:
