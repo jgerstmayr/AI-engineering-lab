@@ -15,7 +15,7 @@ The project introduces a benchmark framework for evaluating LLMs on mechanical e
 
 ---
 
-## Notes for running LLM agents
+## Notes for running agent.py
 
 In order to run the code, you need to install at least:
 
