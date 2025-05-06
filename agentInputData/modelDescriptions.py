@@ -6,7 +6,7 @@
 #
 # Details:  Lists, dictionaries and lists used by agend
 #
-# Authors:  Tobias Möltner
+# Authors:  Johannes Gerstmayr; Tobias Möltner
 # Date:     2025-02-25
 # Notes:    Collection of modeldescriptions and according possible parametrizations.
 #
