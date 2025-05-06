@@ -38,11 +38,19 @@ Before running the agent for Phi-Q4, you need to copy `results_MC.json` and `res
 
 For merging the results of several agent runs, either run:
 
-`python ./testModelCreationDriver.py -m 'logsTM'`
+`python testModelCreationDriver.py -m logsTM`
 
 or:
 
-`python ./agentDriver.py -m 'logsAgent'`
+`python agentDriver.py -m logsAgent`
+
+For perturbation analysis run the modelCreation with the flag `s`:
+
+`python testModelCreationTob.py -n Llama3.1-8B-Q4 -s`
+
+and choose Levensthein `lv`or numerical correctness `nm` for post-processing:
+
+`python postProcessing.py -lv -d logsTMS/log_Llama3.1-8B-Q4`
 
 For further options, run the files with the -h option to see help.
 
