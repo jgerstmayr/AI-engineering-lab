@@ -44,9 +44,9 @@ or:
 
 `python agentDriver.py -m logsAgent`
 
-For perturbation analysis run the modelCreation with the flag `s`:
+For perturbation analysis run the model creation with the flag `s`:
 
-`python testModelCreationTob.py -n Llama3.1-8B-Q4 -s`
+`python testModelCreationDriver.py -n Llama3.1-8B-Q4 -s`
 
 and choose Levensthein `lv`or numerical correctness `nm` for post-processing:
 
